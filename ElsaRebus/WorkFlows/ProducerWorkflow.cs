@@ -25,7 +25,7 @@ namespace ElsaRebus
         {
             builder
                 .Timer(Duration.FromSeconds(5))
-                .WriteLine("Sending a random greeting to the \"greetings\" queue.")
+                .WriteLine("Sending a hello message.")
                 .Then<SendRebusMessage>(sendMessage => sendMessage.Set(x => x.Message, new MyMessage { Text = "hello" }));
         }
 
