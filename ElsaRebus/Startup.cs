@@ -30,16 +30,26 @@ namespace ElsaRebus
         public void ConfigureServices(IServiceCollection services)
         {
             var elsaSection = Configuration.GetSection("Elsa");
+            
             services
-                .AddElsa(elsa => elsa
-                    .UseEntityFrameworkPersistence(ef => ef.UseSqlite())
-                    .AddConsoleActivities()
-                    .AddQuartzTemporalActivities()
-                    .AddRebusActivities<MyMessage>()
-                    .UseRabbitMq("amqp://guest:guest@localhost")
-                    .AddWorkflow<ConsumerWorkflow>()
-                    .AddWorkflow<ProducerWorkflow>()
+                .AddElsa( elsa => elsa.UseEntityFrameworkPersistence(ef => ef.UseSqlite())
+                                        .AddConsoleActivities()
+                                        .AddQuartzTemporalActivities()
+                                        .AddHttpActivities()
+                                        .UseRabbitMq("amqp://guest:guest@SRV-VM-CBRIDGE:5672")
+                                        .AddWorkflow<ConsumerWorkflow>()
+                                        .AddWorkflow<ProducerWorkflow>()
+                                        .AddRebusActivities<MyMessage>()
+
+
+
                 );
+            
+            // Elsa API endpoints.
+            services.AddElsaApiEndpoints();
+
+            // For Dashboard.
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,15 +60,18 @@ namespace ElsaRebus
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapGet("/", async context =>
+            app
+                .UseStaticFiles() // For Dashboard.
+                .UseHttpActivities()
+                .UseRouting()
+                .UseEndpoints(endpoints =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                    // Elsa API Endpoints are implemented as regular ASP.NET Core API controllers.
+                    endpoints.MapControllers();
+
+                    // For Dashboard.
+                    endpoints.MapFallbackToPage("/_Host");
                 });
-            });
         }
     }
 }
